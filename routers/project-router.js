@@ -1,39 +1,47 @@
-const express = require("express");
+const express = require('express');
 
-const db = require("../data/db-config.js");
+const Projects = require('./router-model');
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
-  db("projects as p")
-    .then(projects => {
-      res.status(200).json(projects);
-    })
-    .catch(err => {
-      res.status(500).json(err);
-    });
-});
-
-router.get("/:id", async (req, res) => {
-  const id = req.params.id
+router.post('/', async (req, res) => {
+  const data = req.body;
   try {
-    const project = await db('projects').where({id})
-    const actions = await db('actions').where({project_id: id})
-    res.status(200).json({...project[0], actions: [...actions],})
-  } catch {
-    res.status(500).json(err);
+    const newProject = await Projects.addProject(data);
+    res.status(201).json(newProject);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Server error 1',
+    });
   }
 });
 
-router.post("/", (req, res) => {
-  db("projects")
-    .insert(req.body)
-    .then(added => {
-      res.status(201).json(added);
-    })
-    .catch(err => {
-      res.status(500).json(err);
+router.post('/:id/actions', async (req, res) => {
+  const data = req.body;
+  try {
+    const newAction = await Projects.addAction(data);
+    res.status(201).json(newAction);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Server error 2',
     });
+  }
+});
+
+router.get('/:id', async (req, res) => {
+  const {
+    params: { id },
+  } = req;
+  try {
+    const project = await Projects.getProjectById(id);
+    const projectActions = await Projects.getProjectActions(id);
+
+    res.status(200).json({ ...project, actions: [projectActions] });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Server error 3',
+    });
+  }
 });
 
 module.exports = router;
